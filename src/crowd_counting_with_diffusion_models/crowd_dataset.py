@@ -14,6 +14,7 @@ import cv2
 
 # from .helpers import set_seed
 
+
 def set_seed(seed=1):
     random.seed(seed)
     np.random.seed(seed)
@@ -24,20 +25,20 @@ def set_seed(seed=1):
 
 
 class CrowdDataset(Dataset):
-    def __init__(self, 
-            images_transform,
-            labels_transform,
-            images_dir_path ='/zhome/d4/a/214319/adlcv_project/data/part_A_final/train_data/images', 
-            labels_dir_path ='/zhome/d4/a/214319/adlcv_project/data/part_A_final/train_data/ground_truth', 
-            num_samples=40,
-            seed=1,
-        ):
-
+    def __init__(
+        self,
+        images_transform,
+        labels_transform,
+        images_dir_path="/zhome/d4/a/214319/crowd_counting/data/part_A_final/train_data/images",
+        labels_dir_path="/zhome/d4/a/214319/crowd_counting/data/part_A_final/train_data/ground_truth",
+        num_samples=40,
+        seed=1,
+    ):
         self.images_paths = [path for path in os.scandir(images_dir_path)]
         self.labels_paths = [path for path in os.scandir(labels_dir_path)]
 
-        self.images_paths = sorted(self.images_paths, key=lambda path: int(re.search(r'\d+', path.name).group()))
-        self.labels_paths = sorted(self.labels_paths, key=lambda path: int(re.search(r'\d+', path.name).group()))
+        self.images_paths = sorted(self.images_paths, key=lambda path: int(re.search(r"\d+", path.name).group()))
+        self.labels_paths = sorted(self.labels_paths, key=lambda path: int(re.search(r"\d+", path.name).group()))
 
         # Reduce dataset size
         if num_samples:
@@ -48,15 +49,14 @@ class CrowdDataset(Dataset):
 
         self.images_transform = images_transform
         self.labels_transform = labels_transform
-       
-                
+
     def __len__(self):
         return len(self.images_paths)
-    
+
     def __getitem__(self, idx):
         image_path = self.images_paths[idx]
         image = Image.open(image_path)
-        
+
         if image.mode != "RGB":
             image = image.convert("RGB")
 
@@ -79,14 +79,44 @@ class CrowdDataset(Dataset):
             label = self.labels_transform(Image.fromarray(label))
             # Extract the tensor data
             # label_blurred = label.numpy()
-            
+
             # # Normalize to preserve people count
             # if raw_count > 0:  # Avoid division by zero
             #     current_sum = label_blurred.sum()
             #     label_blurred = label_blurred * (raw_count / current_sum)
             #     label = torch.from_numpy(label_blurred)
-        
+
         return image, label
+
+
+def prepare_dataloaders(batch_size=100, val_batch_size=32, kernel_size=3, sigma=1.0, img_height=600, img_width=872):
+    images_transform = transforms.Compose(
+        [
+            transforms.Resize(size=(img_height, img_width)),
+            transforms.ToTensor(),  # from [0,255] to range [0.0,1.0]
+            transforms.Normalize((0.5,), (0.5,)),  # range [-1,1]
+        ]
+    )
+
+    labels_transform = transforms.Compose(
+        [
+            transforms.Resize(size=(img_height, img_width)),
+            transforms.ToTensor(),  # from [0,255] to range [0.0,1.0]
+            transforms.GaussianBlur(kernel_size=kernel_size, sigma=sigma),
+        ]
+    )
+
+    train_dataset = CrowdDataset(images_transform=images_transform, labels_transform=labels_transform)
+
+    # train_dataset, val_dataset, test_dataset = random_split(train_dataset, [train_size, val_size, test_size], generator=torch.Generator().manual_seed(SEED))
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    # val_loader = DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False)
+    # test_loader = DataLoader(test_dataset, batch_size=val_batch_size, shuffle=False)
+    val_loader = None
+    test_loader = None
+
+    return train_loader, val_loader, test_loader
 
 
 # # transform = transforms.Compose([
@@ -141,7 +171,6 @@ class CrowdDataset(Dataset):
 # image_bgr = cv2.cvtColor(image[0].permute(1, 2, 0).numpy(), cv2.COLOR_RGB2BGR)
 
 
-
 # # Get coordinates where label is 1
 # points = np.column_stack(np.where(label[0].numpy() == 1))
 
@@ -155,6 +184,3 @@ class CrowdDataset(Dataset):
 # image_with_circles = image_with_circles.astype(np.float32) / 255.0
 
 # plt.imsave("output_image.png", image_with_circles)
-
-
-

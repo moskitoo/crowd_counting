@@ -11,6 +11,9 @@ import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
 import typer
+from crowd_dataset import prepare_dataloaders, set_seed
+from ddpm import Diffusion
+from model import UNet
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -22,9 +25,6 @@ logging.basicConfig(
     datefmt="%I:%M:%S",
 )
 
-from ddpm import Diffusion
-from model import UNet
-from crowd_counting_with_diffusion_models.utils.util import CLASS_LABELS, prepare_dataloaders, set_seed
 
 set_seed()
 
@@ -44,10 +44,10 @@ def save_images(images, path, show=True, title=None, nrow=10):
 
 
 def create_result_folders(experiment_name):
-    os.makedirs("weights", exist_ok=True)
-    os.makedirs("results", exist_ok=True)
-    os.makedirs(os.path.join("weights", experiment_name), exist_ok=True)
-    os.makedirs(os.path.join("results", experiment_name), exist_ok=True)
+    os.makedirs("models", exist_ok=True)
+    os.makedirs("reports", exist_ok=True)
+    os.makedirs(os.path.join("models", experiment_name), exist_ok=True)
+    os.makedirs(os.path.join("reports", experiment_name), exist_ok=True)
 
 
 def train(
@@ -56,7 +56,7 @@ def train(
     # img_height=560,
     # img_width=870,
     img_height=128,
-    img_width=128,    
+    img_width=128,
     input_channels=1,
     channels=32,
     time_dim=256,
@@ -68,7 +68,7 @@ def train(
     device="cpu",
     kernel_size=3,
     sigma=1.0,
-    verbose=False
+    verbose=False,
 ):
     create_result_folders(experiment_name)
     train_loader, _, _ = prepare_dataloaders(
@@ -86,7 +86,7 @@ def train(
         time_dim=time_dim,
         channels=channels,
         device=device,
-        verbose=verbose
+        verbose=verbose,
     ).to(device)
 
     diff_type = "DDPM-cFg" if cfg else "DDPM"
@@ -129,9 +129,7 @@ def train(
             if np.random.rand() < p_uncod:
                 images = None
 
-            t = diffusion.sample_timesteps(labels.shape[0]).to(
-                device
-            )  # line 3 from the Training algorithm
+            t = diffusion.sample_timesteps(labels.shape[0]).to(device)  # line 3 from the Training algorithm
             x_t, noise = diffusion.q_sample(
                 labels, t
             )  # inject noise to the images (forward process), HINT: use q_sample
@@ -151,7 +149,7 @@ def train(
         if epoch_loss <= min_train_loss:
             torch.save(
                 model.state_dict(),
-                os.path.join("weights", experiment_name, f"model.pth"),
+                os.path.join("models", experiment_name, f"model.pth"),
             )
             min_train_loss = epoch_loss
 
@@ -174,29 +172,34 @@ def train(
             sampled_images = diffusion.p_sample_loop(model, batch_size=labels.shape[0], y=image)
             save_images(
                 images=sampled_images,
-                path=os.path.join("results", experiment_name, f"{epoch}.jpg"),
+                path=os.path.join("reports", experiment_name, f"{epoch}.jpg"),
                 show=show,
                 title=title,
             )
             save_images(
                 images=label,
-                path=os.path.join("results", experiment_name, f"gt_{epoch}.jpg"),
+                path=os.path.join("reports", experiment_name, f"gt_{epoch}.jpg"),
                 show=show,
                 title=title,
             )
 
 
 def main(
-    cfg: bool = True, num_epochs: int = 30, batch_size: int = 1, kernel_size: int = 3, sigma: float = 1.0, verbose: bool = False, exp_name: str = 'DDPM-cfg', img_height: int = 128, img_width: int = 128
+    cfg: bool = True,
+    num_epochs: int = 30,
+    batch_size: int = 1,
+    kernel_size: int = 3,
+    sigma: float = 1.0,
+    verbose: bool = False,
+    exp_name: str = "DDPM-cfg",
+    img_height: int = 128,
+    img_width: int = 128,
 ):
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Model will run on {device}, classifier-free guidance: {cfg} \n")
 
     if not cfg:
-        print(
-            "To train a classifier-free guidance model, activate the flag by running the script as follows>"
-        )
+        print("To train a classifier-free guidance model, activate the flag by running the script as follows>")
         print("python ddm_train.py --cfg \n")
 
     set_seed()
