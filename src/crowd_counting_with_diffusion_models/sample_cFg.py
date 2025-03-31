@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from ddpm import Diffusion
 from model import UNet
 from dataset.helpers import *
-from util import show, set_seed, CLASS_LABELS
+from crowd_counting_with_diffusion_models.utils.util import show, set_seed, CLASS_LABELS
 
 def show_n_forward(imgs, title=None, fig_titles=None, save_path=None): 
 

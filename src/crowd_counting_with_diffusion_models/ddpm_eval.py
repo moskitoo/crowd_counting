@@ -14,7 +14,7 @@ import torchvision
 from ddpm import Diffusion
 from model import Classifier, UNet
 from dataset.helpers import *
-from util import set_seed, prepare_dataloaders
+from crowd_counting_with_diffusion_models.utils.util import set_seed, prepare_dataloaders
 set_seed()
 
 class VGG(nn.Module):

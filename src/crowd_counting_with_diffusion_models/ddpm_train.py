@@ -24,7 +24,7 @@ logging.basicConfig(
 
 from ddpm import Diffusion
 from model import UNet
-from util import CLASS_LABELS, prepare_dataloaders, set_seed
+from crowd_counting_with_diffusion_models.utils.util import CLASS_LABELS, prepare_dataloaders, set_seed
 
 set_seed()
 
