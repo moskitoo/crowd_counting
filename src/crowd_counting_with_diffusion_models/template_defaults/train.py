@@ -1,5 +1,5 @@
 from crowd_counting_with_diffusion_models.model import Model
-from crowd_counting_with_diffusion_models.data import MyDataset
+from crowd_counting_with_diffusion_models.template_defaults.data import MyDataset
 
 def train():
     dataset = MyDataset("data/raw")
