@@ -1,6 +1,6 @@
 # crowd_counting_with_diffusion_models
 
-**GitHub Repo Description:**
+This project implements CrowdDiff, a diffusion-based model for crowd counting that generates density maps from input images using the ShanghaiTech dataset. The work focuses on guiding the diffusion process with image context, evaluating multi-density map fusion, and analyzing the effects of kernel sizes and a counting branch in the denoising U-Net architecture to improve crowd density estimation.
 
 ## Project structure
 
