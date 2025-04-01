@@ -14,6 +14,8 @@ import torchvision.transforms as transforms
 import typer
 from crowd_dataset import prepare_dataloaders, set_seed
 from ddpm import Diffusion
+from hydra.compose import compose
+from hydra.initialize import initialize
 from model import UNet
 from omegaconf import DictConfig
 from torch import optim
@@ -221,11 +223,8 @@ def run_experiment(cfg: DictConfig):
 
 def main(config_name: str = "exp_1.yaml"):
     """Run training with configuration from specified YAML file."""
-    from hydra.compose import compose
-    from hydra.initialize import initialize
-    
-    with initialize(version_base=None, config_path="configs"):
-        # Load the config from the specified YAML file
+
+    with initialize(version_base=None, config_path="../../configs"):
         cfg = compose(config_name=config_name)
         run_experiment(cfg)
 
