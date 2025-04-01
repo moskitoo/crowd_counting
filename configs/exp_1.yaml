@@ -1,0 +1,9 @@
+free_guidance: True
+num_epochs: 30
+batch_size: 1
+kernel_size: 3
+sigma: 1.0
+verbose: False
+exp_name: "DDPM-cfg"
+img_height: 128
+img_width: 128
