@@ -3,6 +3,7 @@ import logging
 import os
 import random
 
+import hydra
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -14,6 +15,7 @@ import typer
 from crowd_dataset import prepare_dataloaders, set_seed
 from ddpm import Diffusion
 from model import UNet
+from omegaconf import DictConfig
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -184,27 +186,37 @@ def train(
             )
 
 
-def main(
-    cfg: bool = True,
-    num_epochs: int = 30,
-    batch_size: int = 1,
-    kernel_size: int = 3,
-    sigma: float = 1.0,
-    verbose: bool = False,
-    exp_name: str = "DDPM-cfg",
-    img_height: int = 128,
-    img_width: int = 128,
-):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Model will run on {device}, classifier-free guidance: {cfg} \n")
+@hydra.main(config_path="configs", config_name="exp_1.yaml")
+def run_experiment(cfg: DictConfig):
+    # free_guidance: bool = True,
+    # num_epochs: int = 30,
+    # batch_size: int = 1,
+    # kernel_size: int = 3,
+    # sigma: float = 1.0,
+    # verbose: bool = False,
+    # exp_name: str = "DDPM-cfg",
+    # img_height: int = 128,
+    # img_width: int = 128,
+    verbose: bool = cfg.verbose
+    free_guidance: bool = cfg.get("free_guidance", True)
+    num_epochs: int = cfg.get("num_epochs", 30)
+    batch_size: int = cfg.get("batch_size", 1)
+    kernel_size: int = cfg.get("kernel_size", 3)
+    sigma: float = cfg.get("sigma", 1.0)
+    exp_name: str = cfg.get("exp_name", "DDPM-cfg")
+    img_height: int = cfg.get("img_height", 128)
+    img_width: int = cfg.get("img_width", 128)
 
-    if not cfg:
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Model will run on {device}, classifier-free guidance: {free_guidance} \n")
+
+    if not free_guidance:
         print("To train a classifier-free guidance model, activate the flag by running the script as follows>")
         print("python ddm_train.py --cfg \n")
 
     set_seed()
     train(
-        cfg=cfg,
+        cfg=free_guidance,
         num_epochs=num_epochs,
         experiment_name=exp_name,
         device=device,
@@ -215,6 +227,10 @@ def main(
         img_height=img_height,
         img_width=img_width,
     )
+
+
+def main(config_name: str = "exp_1.yaml"):
+    run_experiment(config_name)
 
 
 if __name__ == "__main__":
