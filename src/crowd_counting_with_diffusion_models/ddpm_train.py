@@ -186,17 +186,7 @@ def train(
             )
 
 
-@hydra.main(config_path="configs", config_name="exp_1.yaml")
 def run_experiment(cfg: DictConfig):
-    # free_guidance: bool = True,
-    # num_epochs: int = 30,
-    # batch_size: int = 1,
-    # kernel_size: int = 3,
-    # sigma: float = 1.0,
-    # verbose: bool = False,
-    # exp_name: str = "DDPM-cfg",
-    # img_height: int = 128,
-    # img_width: int = 128,
     verbose: bool = cfg.verbose
     free_guidance: bool = cfg.get("free_guidance", True)
     num_epochs: int = cfg.get("num_epochs", 30)
@@ -230,7 +220,14 @@ def run_experiment(cfg: DictConfig):
 
 
 def main(config_name: str = "exp_1.yaml"):
-    run_experiment(config_name)
+    """Run training with configuration from specified YAML file."""
+    from hydra.compose import compose
+    from hydra.initialize import initialize
+    
+    with initialize(version_base=None, config_path="configs"):
+        # Load the config from the specified YAML file
+        cfg = compose(config_name=config_name)
+        run_experiment(cfg)
 
 
 if __name__ == "__main__":
